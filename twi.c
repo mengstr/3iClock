@@ -1,9 +1,24 @@
+#include <util/delay_basic.h>
+#include <avr/interrupt.h>
+#include <compat/twi.h>
+
 #include "twi.h"
 
+static void (*twi_onSlaveTransmit)(void);
+static void (*twi_onSlaveReceive)(uint8_t*, int);
 
-//volatile uint8_t hour=1;
-//volatile uint8_t minute=11;
-//volatile uint8_t second=22;
+static uint8_t twi_masterBuffer[TWI_BUFFER_LENGTH];
+static volatile uint8_t twi_masterBufferIndex;
+static uint8_t twi_masterBufferLength;
+
+static uint8_t twi_txBuffer[TWI_BUFFER_LENGTH];
+static volatile uint8_t twi_txBufferIndex;
+static volatile uint8_t twi_txBufferLength;
+
+static uint8_t twi_rxBuffer[TWI_BUFFER_LENGTH];
+static volatile uint8_t twi_rxBufferIndex;
+
+static volatile uint8_t twi_error;
 
 uint8_t rxBuffer[BUFFER_LENGTH];
 uint8_t rxBufferIndex = 0;
@@ -16,12 +31,8 @@ uint8_t txBufferLength = 0;
 
 uint8_t transmitting = 0;
 
-
-
 static volatile uint8_t twi_state;
 static uint8_t twi_slarw;
-
-
 
 
 // !!!
@@ -483,27 +494,6 @@ SIGNAL(TWI_vect) {
   }
 }
 
-
-
-uint8_t ReadRTC(const uint8_t adr){
-  uint8_t data=0;
- 
-  beginTransmission(RTCADDR);
-  send(adr);
-  endTransmission();
-  requestFrom(RTCADDR,1);
-  while (available()) data=receive();
-
-  return data;
-}
-
-
-void WriteRTCByte(const uint8_t adr, const uint8_t data){
-  beginTransmission(RTCADDR);
-  send(adr);
-  send(data);
-  endTransmission();
-} 
 
 
 
